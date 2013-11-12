@@ -1,0 +1,9 @@
+<p>Welcome {{user}}</p>
+<p>{{label}} Avaliable space :: {{quota}} </p>
+{% for entry in listFiles %}
+	{% if entry.is_folder == False %}
+	<p><b> <a id="p{{pane}}{{entry.id}}" download="{{entry.name}}" href="{{entry.link}}">{{entry.name}}</a> :: {{entry.size}}</b></p>
+	{% else %}
+	<p><b> <a id="{{entry.id}}" href="javascript:listFiles('{{pane}}','{{drive}}','{{entry.id}}');">{{entry.name}}</a> :: {{entry.size}}</b></p>
+	{% endif %}
+{% endfor %}

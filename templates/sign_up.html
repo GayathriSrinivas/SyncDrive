@@ -1,0 +1,78 @@
+
+<script>
+
+function checkPass()
+{
+    //Store the password field objects into variables ...
+    var pass1 = document.getElementById('pass1');
+    var pass2 = document.getElementById('pass2');
+    //Store the Confimation Message Object ...
+    var message = document.getElementById('confirmMessage');
+    //Set the colors we will be using ...
+    var badColor = "red";
+
+    //Compare the values in the password field 
+    //and the confirmation field
+    if(pass1.value == pass2.value){
+        message.innerHTML = ""
+    }else{
+        //The passwords do not match.
+        //Set the color to the bad color and
+        //notify the user.
+        message.style.color = badColor;
+        message.innerHTML = "Passwords Do Not Match!"
+    }
+} 
+
+
+function checkEmail() {
+
+    var email = document.getElementById('email');
+    var filter = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+    var message = document.getElementById('confirmMessage');
+    var badColor = "red";
+
+    if (!filter.test(email.value)) {
+	  message.style.color = badColor;
+	 message.innerHTML = "Please Enter valid Email"
+    }else{
+	 message.innerHTML = " "
+    }
+}
+ 
+</script>
+
+<html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <!-- Latest compiled and minified CSS -->
+            <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" media="screen">
+            <!-- Optional theme -->
+            <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+        </head> 	
+        <body>
+            <div class="container">
+                <div class="jumbotron">
+		<h1>Sign up Page</h1>
+		<form name="input" action="/entry" method="POST">
+		<br>Email : <input type="text" name="username" id="email" onChange="checkEmail();"><br>
+		<br>Password : <input type="password" name="password" id="pass1" ><br>
+		<br>Cofirm Password : <input type="password" name="confirm_password" id="pass2" onChange="checkPass();"> <br>
+		<br><span id="confirmMessage" class="confirmMessage"></span></br>
+		<input type="checkbox" checked="checked"/>
+		<a class="light_blue" href="https://app.box.com/legal_text/tos">I agree to the SyncDrive Terms of Service.</a>
+		<br><input type="submit" name="submit"><br>
+		</form>
+                </div>
+            </div> <!-- end of container -->
+           
+            <!-- script tags -->
+            <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+            <script src="//code.jquery.com/jquery.js"></script>
+            <!-- Latest compiled and minified JavaScript -->
+            <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+            <!-- application ui scripts -->
+        </body>
+</html>
+
+

@@ -1,0 +1,40 @@
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row marketing">
+        <div class="col-lg-6" id="pane1" style="border:1px solid;">
+          <select id="pane1_drive" onchange="onDropDownSelect(this.id)">
+            <option>Select a Drive</option>
+            <option value="0">Google Drive</option>
+            <option value="1">SkyDrive</option>
+            <option value="2">Dropbox</option>
+          </select>
+          <div id="drivePane1">
+            <br/>
+            
+          </div>
+        </div>
+        <div class="col-lg-6"  id="pane2" style="border:1px solid;">
+          <select id="pane2_drive" onchange="onDropDownSelect(this.id)">
+            <option>Select a Drive</option>
+            <option value="0">Google Drive</option>
+            <option value="1">SkyDrive</option>
+            <option value="2">Dropbox</option>
+          </select>
+          <div id="drivePane2">
+            <br/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="/static/h5utils.js"></script>
+    <script src="/static/transfer.js"></script>
+  </body>
+</html>
+
+
