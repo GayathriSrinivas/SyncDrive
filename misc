@@ -1,0 +1,33 @@
+
+
+https://www.box.com/api/oauth2/authorize?response_type=code&client_id=3r1kni75hifxne62zectnok8ar5brsh2&state=authenticated"
+
+	raw_data = urllib2.urlopen("https://www.googleapis.com/drive/v2/about?access_token=%s" % access_token).read()	
+	response = json.loads(raw_data)
+	name = response["name"]
+	quota_mb = sizeof_fmt(int(response["quotaBytesTotal"]))
+
+	raw_data = urllib2.urlopen("https://www.googleapis.com/drive/v2/files?access_token=%s" % access_token).read()
+	response = json.loads(raw_data)
+	print response
+	return render_template('hello.html',name=name,quota=quota_mb,listFiles=listFiles,response=response)
+
+{
+    "project_name" : "SyncDrive",
+    "no_drive" : "4",
+    "entries" : [
+    	{
+		    "drive" : "skydrive",
+            "client_id" : "0000000048104E79",
+            "client_secret" : "Hd0gves49hMsfmhiQR9X2TSKhewxh0A4",
+            "redirect_uri" : "http://ec2.socialphotos.net:5000/callback_skydrive",
+		}
+    ][
+    	{
+		    "drive" : "google",
+            "client_id" : "0000000048104E79",
+            "client_secret" : "Hd0gves49hMsfmhiQR9X2TSKhewxh0A4",
+            "redirect_uri" : "http://ec2.socialphotos.net:5000/callback_skydrive",
+		}
+	]   
+}
