@@ -1,146 +1,204 @@
+#! /usr/bin/python
+
 from flask import *
-import urllib2
+
 import json
+import os
 import requests
 import urllib
+import urllib2
+
 import google_drive
-import sky_drive
+import skydrive
 import db_util
 import dropbox
+import box
 
+NUM_PROVIDERS = 4
 SECRET_KEY = 'synergy'
 app = Flask(__name__)
 app.config.from_object(__name__)
-
-def sizeof_fmt(num):
-    for x in ['bytes','KB','MB','GB','TB']:
-        if num < 1024.0:
-            return "%3.1f %s" % (num, x)
-        num /= 1024.0
+UPLOAD_DIR = '/tmp/syncdrive'
 
 def get_provider(index):
 	mapping = {
 				0 : google_drive,
-				1 : sky_drive,
-				2 : dropbox
+				1 : skydrive,
+				2 : dropbox,
+				3 : box
 			  }
 	return mapping[index]
 
 
 @app.route('/')
 def welcome_page():
-    return render_template('welcome.html')
+    error = request.args.get('error', '')
+    return render_template('welcome.html', error = error == 'true')
+
+@app.route('/verify')
+def verify_email():
+    email = request.args.get('email', '')
+    db_util.verify_email(urllib2.unquote(email))
+    return "verification email sent. approve and then register."
 
 @app.route('/sign_up')
 def signup_page():
     return render_template('sign_up.html')
 
-@app.route('/login')
+@app.route('/transfer.js')
+def transfer_js():
+    return render_template('transfer.js',
+                           pane1 = session.get('pane1', None),
+                           pane2 = session.get('pane2', None))
+
+@app.route('/login', methods = ['POST', 'GET'])
 def login_page():
-    return render_template('login.html')
-
-@app.route('/entry',methods = ['POST'] )
-def store_user():
-	username = request.form['username']
+    if request.method == "GET":
+        return render_template('login.html', print_error = False)
+    email = request.form['email']
+    password = request.form['password']
+    if not db_util.valid_user(email,password):
+        return redirect("/?error=true")
+    session["email"] = email
+    return redirect('/transfer')
+   
+@app.route('/new_user',methods = ['POST'] )
+def process_new_user():
+	email = request.form['email']
 	password = request.form['password']
-	db_util.user_signup(username,password)
-	session["email"] = username
+	db_util.user_signup(email,password)
+	session["email"] = email
 	return redirect('/transfer')
-	return render_template('entry.html',username=username,password=password)
 
-#@app.route('/login')
-#def input_page():
-#	return render_template('login.html') 
+@app.route('/check_email')
+def check_email():
+    email = request.args.get('email','')
+    return str(db_util.email_exists(email)).lower()
 
-# skydrive callback
-@app.route('/callback')
-def callback():
-	return render_template('callback.html')
+@app.route('/callback_skydrive')
+def callback_skydrive():
+	key = db_util.get_key('skydrive')
+	url = 'https://login.live.com/oauth20_token.srf'
 
-# skydrive access token callback
-@app.route('/callback')
-def skydrive_access_token():
-	access_token = request.args.get('token','')
-	db_util.save_access_token(access_token, 'sky_drive', session['email'])
+	values = {
+		'client_id' :key['client_id'] ,
+		'redirect_uri' : key['redirect_uri'] ,
+		'client_secret' : key['client_secret'] ,
+		'grant_type' : 'authorization_code' ,
+		'code' :request.args.get('code','')
+	}
+	
+	response = requests.post(url,data = values).json()
+
+	db_util.save_token('skydrive',"access_token",response['access_token'],session['email'])
+	db_util.save_token('skydrive',"refresh_token",response['refresh_token'],session['email'])
 	return redirect('/transfer')
 
 @app.route('/callback_google')
 def callback_google():
- 	code = request.args.get('code')
+	key = db_util.get_key('google_drive')
+	url = "https://accounts.google.com/o/oauth2/token"
+
 	values = {
-            'code':code,
-            'client_id':'485476280210.apps.googleusercontent.com' ,
-            'client_secret':'I_fk8bSDc0S2mjaGuJcV3k-6',
-            'redirect_uri':'http://ec2.socialphotos.net:5000/callback_google',
+            'code':request.args.get('code'),
+            'client_id': key['client_id'] ,
+            'client_secret': key['client_secret'],
+            'redirect_uri': key['redirect_uri'],
             'grant_type':'authorization_code'
-        }
-	headers = {'content-type': 'application/x-www-form-urlencoded'}
-        url = "https://accounts.google.com/o/oauth2/token"
+    }
 
-
-	data = urllib.urlencode(values)
-	req = urllib2.Request(url, data)
-	response = urllib2.urlopen(req)
-	raw_data = response.read()
-	response = json.loads(raw_data)
-	access_token=response['access_token']	
-	db_util.save_access_token(access_token, 'google_drive', session['email'])
+	response = requests.post(url,data = values).json()
+	db_util.save_token('google_drive',"access_token",response['access_token'],session['email'])
+	if(response.get('refresh_token',None) != None):
+		 db_util.save_token('google_drive',"refresh_token",response['refresh_token'],session['email'])
 	return redirect('/transfer')
 
-	raw_data = urllib2.urlopen("https://www.googleapis.com/drive/v2/about?access_token=%s" % access_token).read()	
-	response = json.loads(raw_data)
-	name = response["name"]
-	quota_mb = sizeof_fmt(int(response["quotaBytesTotal"]))
+@app.route('/callback_box')
+def callback_box():
+	key = db_util.get_key('box')
+	url = "https://www.box.com/api/oauth2/token"
 
-	raw_data = urllib2.urlopen("https://www.googleapis.com/drive/v2/files?access_token=%s" % access_token).read()
-	response = json.loads(raw_data)
-	print response
-	return render_template('hello.html',name=name,quota=quota_mb,listFiles=listFiles,response=response)
+	values = {
+            'code':request.args.get('code',None),
+        	'client_id': key['client_id'] ,
+        	'client_secret': key['client_secret'],	
+            'grant_type':'authorization_code'
+        }
+
+	response = requests.post(url,data = values).json()
+
+	db_util.save_token('box',"access_token",response['access_token'],session['email'])
+	db_util.save_token('box',"refresh_token",response['refresh_token'],session['email'])
+	return redirect('/transfer')
 
 @app.route('/callback_dropbox')
 def callback_dropbox():
-	dropbox_token = request.args.get('token','')	
-	db_util.save_access_token(dropbox_token, 'dropbox', session['email'])
+	key = db_util.get_key('dropbox')
+	url = "https://api.dropbox.com/1/oauth2/token"
+	app_key = key['client_id'] 
+	app_secret = key['client_secret']
+
+	values = {
+            'code':request.args.get('code'),
+            'redirect_uri': key['redirect_uri'],
+            'grant_type':'authorization_code'
+    }
+
+	response = requests.post(url,auth = (app_key,app_secret),data = values).json()
+	db_util.save_token('dropbox',"access_token",response['access_token'],session['email'])
 	return redirect('/transfer')
-	print dropbox_token
-	raw_data = urllib2.urlopen("https://api.dropbox.com/1/account/info?access_token=%s" % dropbox_token).read()
-	data = json.loads(raw_data)
-	print data		
-	quota=data["quota_info"]["quota"]
-	print quota	
-	return render_template('dropbox.html',user=data["display_name"], emailId=data["email"], quotaDisplay = sizeof_fmt(int(quota)))
 
 @app.route('/transfer')
 def transfer_page():
-	return render_template('transfer.html')
+	return render_template('transfer.html',
+                           email = session['email'],
+                           upload_prompt = request.args.get('upload', '') == 'success')
 
 @app.route('/transfer_file')
 def transfer_file():
 	source_drive = get_provider(int(request.args.get('src', '0')))
 	destination_drive = get_provider(int(request.args.get('dst', '1')))
 	filename = source_drive.download_file(request.args.get('file_id', ''), session['email'])
-	destination_drive.upload_file(filename, session['email'])
-	return 'okay!'
+	uploaded_file = destination_drive.upload_file(filename, session['email'])
+	return render_template('list_files.html',
+                           listFiles=[uploaded_file],
+                           user=session['email'],
+                           quota='100',
+                           label=destination_drive.display_label,
+                           pane=request.args.get('dst_pane','1'),
+                           drive=request.args.get('dst','0'))
+
+@app.route('/upload', methods = ['POST'])
+def upload_file():
+    file_to_upload = request.files['file']
+    print "## drive %s" % request.form.get('drive', '0')
+    drive = get_provider(int(request.form.get('drive', '0')))
+    if file_to_upload:
+        filename = os.path.join(UPLOAD_DIR, file_to_upload.filename)
+        file_to_upload.save(filename)
+        drive.upload_file(filename, session['email'])
+        os.unlink(filename)
+    return redirect('/transfer?upload=success')
 
 @app.route('/list_files')
 def list_files():
-	drive = get_provider(int(request.args.get('drive','0')))
-	# check if access token already exists
-	if db_util.has_token(session['email'], drive.label):
-		files = drive.list_files(session['email'],request.args.get('folder',''))
-		return render_template('list_files.html',
-								listFiles=files,
-								user=session['email'],
-								quota='100',
-								label=drive.display_label,
-								pane=request.args.get('pane','1'),
-								drive=request.args.get('drive','0'))
-	else:
-		print "###", drive.oauth_url
-		return render_template('oauth.html',
-								label = drive.display_label,
-								oauth_url = drive.oauth_url)
-
+    drive = get_provider(int(request.args.get('drive','0')))
+    session['pane%s' % request.args.get('pane','1')] = int(request.args.get('drive','0'))
+    # check if access token already exists
+    if db_util.has_token(session['email'], drive.label,'access_token'):
+        files = drive.list_files(session['email'],request.args.get('folder',''))
+        return render_template('list_files.html',
+                                listFiles=files,
+                                user=session['email'],
+                                quota='100',
+                                label=drive.display_label,
+                                pane=request.args.get('pane','1'),
+                                drive=request.args.get('drive','0'))
+    else:
+        return render_template('oauth.html',
+                               label = drive.label,
+                               display_label = drive.display_label,
+                               oauth_url = drive.get_oauth_url())
 
 def list_files1():
 	token = session["token"]
@@ -159,8 +217,6 @@ def list_files1():
 	quota_mb = sizeof_fmt(int(quota["available"]))
 	#return render_template('page.html',response=response,quota=quota_mb)
 	return render_template('list_files.html',listFiles=listFiles,user=response["data"][0]["from"]["name"],quota=quota_mb)
-
-   
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0",debug=True)

@@ -33,7 +33,10 @@ function drophandler(event) {
 	var src = parseInt(text.substring(1,2));
 	var dst = (src == 1) ? 2 : 1;
     $('#modalTitle').html("Please wait...");
-    $('#modalBody').html("Transfering <i>" + $('#' + text).html() + "</i> from <b>" + labels[parseInt(paneDrive[src - 1])] + "</b> to <b>" + labels[parseInt(paneDrive[dst - 1])] + "</b> ...");
+    var fileName = $('#' + text).html();
+    if (fileName == undefined || fileName == "undefined")
+        fileName = "";
+    $('#modalBody').html("Transfering <i>" + fileName + "</i> from <b>" + labels[parseInt(paneDrive[src - 1])] + "</b> to <b>" + labels[parseInt(paneDrive[dst - 1])] + "</b> ...");
     $('#modalBox').modal('show');
 	$.get('/transfer_file?src=' + paneDrive[src - 1] + '&dst=' + paneDrive[dst - 1] + '&dst_pane=' + dst + '&file_id=' + srcId, function(data) {
 		$('#drivePane' + dst).append(data);

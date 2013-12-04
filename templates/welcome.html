@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
   <head>
@@ -10,6 +9,11 @@
           padding-bottom: 20px;
         }
     </style>
+    {% if error: %}
+    <script>
+        alert('Email and password does not match! Please try again');
+    </script>
+    {% endif %}
   </head>
   <body>
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -47,6 +51,9 @@
               <li data-target="#carousel-example-generic" data-slide-to="1"></li>
               <li data-target="#carousel-example-generic" data-slide-to="2"></li>
               <li data-target="#carousel-example-generic" data-slide-to="3"></li>
+              <li data-target="#carousel-example-generic" data-slide-to="4"></li>
+              <li data-target="#carousel-example-generic" data-slide-to="5"></li>
+              <li data-target="#carousel-example-generic" data-slide-to="6"></li>
             </ol>
 
             <!-- Wrapper for slides -->
@@ -61,27 +68,49 @@
                 </div>
               </div>
               <div class="item">
-                <div class="wrapper"><img width = "1200px" height="400px" src="/static/carousel.jpg" alt="cloud image">
-                <div class="carousel-caption">
+                <div class="wrapper"><img width = "1200px" height="400px" src="/static/p1.jpg" alt="cloud image">
+                  <div class="carousel-caption">
                   <!--Add text here -->
+                  </div>
                 </div>
-                </div> 
-                </div>
-                <div class="item">
-                <div class="wrapper"><img width = "1200px" height="400px" src="/static/image3.jpg" alt="cloud image">
-                <div class="carousel-caption">
-                  <!--Add text here -->
-                </div>
-                </div> 
-                </div>
-                <div class="item">
-                <div class="wrapper"><img width = "1200px" height="400px" src="/static/sync.jpeg" alt="cloud image">
-                <div class="carousel-caption">
-                  <!--Add text here -->
-                </div>
-                </div> 
-                </div>
+                <h3><p align="center"><font color="990066">Manage Your Diversified Data in One Single View!!!</font></p><h3>
               </div>
+
+                <div class="item">
+                <div class="wrapper"><img width = "1200px" height="400px" src="/static/p2.jpg" alt="cloud image">
+                <div class="carousel-caption">
+                  <!--Add text here -->
+                </div>
+                </div>
+                <h3><p align="center"><font color="000096">Simple Drag and Drop between drives to manage space</font></p><h3>
+                </div>
+                <div class="item">
+                <div class="wrapper"><img width = "1200px" height="400px" src="/static/p3.jpg" alt="cloud image">
+                <div class="carousel-caption">
+                  <!--Add text here -->
+                    
+                </div>
+        <h3 align="center"><font color="960000">Simple Drag and Drop between drives to manage space</font></h3>
+                </div>
+                </div>
+                <div class="item">
+                <div class="wrapper"><img width = "1200px" height="400px" src="/static/p4.jpg" alt="cloud image">
+                <div class="carousel-caption">
+                  <!--Add text here -->
+          
+                </div>
+        <h3 align="center"><font color="008900">Handle all your data at one place by splitting and merging files with ease</font></h3>
+                </div>
+                </div>  
+ <div class="item">
+                <div class="wrapper"><img width = "1200px" height="400px" src="/static/p5.jpg" alt="cloud image">
+                <div class="carousel-caption">
+                  <!--Add text here -->
+          
+                </div>
+        <h3 align="center"><font color="000000">Unified Cloud Storage System</font></h3>
+                </div>
+                </div>          
             </div>
 
             <!-- Controls -->
